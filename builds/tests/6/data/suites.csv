@@ -1,0 +1,2 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"/home/runner/work/Learning_project/Learning_project/features/web_search.feature: Search for Pandas","3055","test_search_for_pandas","steps","Sat Dec 27 02:11:08 GMT 2025","passed","Sat Dec 27 02:11:11 GMT 2025","","test_search_steps","",""
