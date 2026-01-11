@@ -9,6 +9,11 @@ on:
   schedule:
     - cron: '0 0 * * *'
 
+# Grant write permissions to repo contents and pages so the workflow can publish to gh-pages
+permissions:
+  contents: write
+  pages: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
