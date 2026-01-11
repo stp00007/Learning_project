@@ -4,6 +4,8 @@ from pytest_bdd import scenarios, given, when, then, parsers
 from playwright.sync_api import Page, expect
 import logging
 
+logger = logging.getLogger(__name__)
+
 # Load the original DuckDuckGo feature and the new Orange SRM login feature
 scenarios('../features/web_search.feature')
 scenarios('../features/orange_login.feature')
@@ -23,8 +25,11 @@ def open_homepage(page: Page):
 def login(page: Page):
     username = os.getenv('ORANGE_USERNAME')
     password = os.getenv('ORANGE_PASSWORD')
+    logger.info('Starting login flow')
     if not username or not password:
+        logger.warning('ORANGE_USERNAME and/or ORANGE_PASSWORD not set; skipping login test')
         pytest.skip('ORANGE_USERNAME and ORANGE_PASSWORD are not set in the environment')
+    logger.info('Using username: %s', username)
 
     # Prefer exact and robust selectors for Orange HRM
     username_selectors = [
@@ -41,25 +46,33 @@ def login(page: Page):
     filled_user = False
     for sel in username_selectors:
         try:
+            logger.debug('Trying username selector: %s', sel)
             page.wait_for_selector(sel, timeout=5000)
             page.fill(sel, username)
+            logger.info('Filled username using selector: %s', sel)
             filled_user = True
             break
         except Exception:
+            logger.debug('Selector did not match or timed out: %s', sel)
             continue
     if not filled_user:
+        logger.error('Username input not found. Update selectors in the test to match the Orange SRM page.')
         pytest.fail('Username input not found. Update selectors in the test to match the Orange SRM page.')
 
     filled_pass = False
     for sel in password_selectors:
         try:
+            logger.debug('Trying password selector: %s', sel)
             page.wait_for_selector(sel, timeout=5000)
             page.fill(sel, password)
+            logger.info('Filled password using selector: %s', sel)
             filled_pass = True
             break
         except Exception:
+            logger.debug('Selector did not match or timed out: %s', sel)
             continue
     if not filled_pass:
+        logger.error('Password input not found. Update selectors in the test to match the Orange SRM page.')
         pytest.fail('Password input not found. Update selectors in the test to match the Orange SRM page.')
 
     # Click possible login buttons
@@ -67,16 +80,21 @@ def login(page: Page):
     clicked = False
     for btn in login_buttons:
         try:
+            logger.debug('Trying login button selector: %s', btn)
             if page.locator(btn).count() > 0:
                 page.click(btn)
+                logger.info('Clicked login button selector: %s', btn)
                 clicked = True
                 break
-        except Exception:
+        except Exception as exc:
+            logger.debug('Click failed for selector %s: %s', btn, exc)
             continue
     if not clicked:
+        logger.error('Login button not found. Update selectors in the test to match the Orange SRM page.')
         pytest.fail('Login button not found. Update selectors in the test to match the Orange SRM page.')
 
     page.wait_for_load_state('networkidle')
+    logger.info('Waiting for post-login page load; current URL: %s', page.url)
 
 @then('I should be logged in')
 def verify_login(page: Page):
@@ -85,10 +103,12 @@ def verify_login(page: Page):
     for ind in indicators:
         loc = page.locator(ind)
         if loc.count() > 0:
+            logger.debug('Found indicator matches for: %s, count=%s', ind, loc.count())
             # Check if any matched element is visible
             for i in range(loc.count()):
                 try:
                     if loc.nth(i).is_visible():
+                        logger.info('Login verified by indicator: %s (match #%s)', ind, i)
                         return
                 except Exception:
                     continue
@@ -97,9 +117,11 @@ def verify_login(page: Page):
     for i in range(avatar.count()):
         try:
             if avatar.nth(i).is_visible():
+                logger.info('Login verified by avatar image')
                 return
         except Exception:
             continue
+    logger.error('Login verification failed: no known logged-in indicators found.')
     pytest.fail('Login verification failed: no known logged-in indicators found. Please update selectors or ensure credentials are valid.')
 
 # Keep existing search steps for reference (optional)
