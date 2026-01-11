@@ -1,2 +1,0 @@
-DEBUG    test_search_steps:test_search_steps.py:25 Searching for: Pandas
-INFO     test_search_steps:test_search_steps.py:27 Search completed for phrase: Pandas
