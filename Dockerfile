@@ -2,9 +2,17 @@ FROM mcr.microsoft.com/playwright/python:v1.36.0-focal
 
 WORKDIR /app
 
-# Install Python deps
-COPY requirements.txt /app/
-RUN pip install --no-cache-dir -r requirements.txt
+# Default environment variables (override at runtime)
+ENV ORANGE_SRM_URL=https://srm.orange.com
+ENV ORANGE_USERNAME=
+ENV ORANGE_PASSWORD=
+
+# Use Poetry for dependency management
+COPY pyproject.toml /app/
+RUN python3 -m pip install --upgrade pip && \
+    pip install --no-cache-dir poetry && \
+    poetry config virtualenvs.create false && \
+    poetry install --no-interaction --no-ansi
 
 # Copy project
 COPY . /app
